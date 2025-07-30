@@ -12,69 +12,72 @@
       display: block;
       margin: 10px 0;
       font-size: 16px;
+      width: 100%;
+      max-width: 300px;
     }
   </style>
 </head>
 <body>
   <label for="year">Year:</label>
-  <select id="year" onchange="populateMakes()">
-    <option>Select Year</option>
-  </select>
+  <select id="year"></select>
 
   <label for="make">Make:</label>
-  <select id="make" onchange="populateModels()">
-    <option>Select Make</option>
-  </select>
+  <select id="make"></select>
 
   <label for="model">Model:</label>
-  <select id="model">
-    <option>Select Model</option>
-  </select>
+  <select id="model"></select>
 
   <script>
+    async function fetchJson(url) {
+      const proxyUrl = "https://corsproxy.io/?";
+      const res = await fetch(proxyUrl + encodeURIComponent(url));
+      return res.json();
+    }
+
     const yearSelect = document.getElementById("year");
     const makeSelect = document.getElementById("make");
     const modelSelect = document.getElementById("model");
 
-    // Populate year dropdown from 2025 to 1980
-    for (let y = 2025; y >= 1980; y--) {
-      let opt = document.createElement("option");
-      opt.value = y;
-      opt.text = y;
-      yearSelect.add(opt);
+    function populateYears() {
+      const currentYear = new Date().getFullYear();
+      for (let y = currentYear; y >= 1980; y--) {
+        const opt = document.createElement("option");
+        opt.value = y;
+        opt.text = y;
+        yearSelect.add(opt);
+      }
     }
 
-    async function populateMakes() {
-      makeSelect.innerHTML = '<option>Select Make</option>';
+    yearSelect.addEventListener("change", async () => {
+      makeSelect.innerHTML = '<option>Loading makes…</option>';
       modelSelect.innerHTML = '<option>Select Model</option>';
+
       const year = yearSelect.value;
-
-      const res = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/GetMakesForVehicleModelYear/modelyear/${year}?format=json`);
-      const data = await res.json();
-
+      const url = `https://vpic.nhtsa.dot.gov/api/vehicles/GetMakesForVehicleModelYear/modelyear/${year}?format=json`;
+      const data = await fetchJson(url);
       const uniqueMakes = new Set();
       data.Results.forEach(item => {
-        if (item.MakeName) {
-          uniqueMakes.add(item.MakeName);
-        }
+        if (item.MakeName) uniqueMakes.add(item.MakeName);
       });
 
+      makeSelect.innerHTML = '<option>Select Make</option>';
       Array.from(uniqueMakes).sort().forEach(make => {
         const opt = document.createElement("option");
         opt.value = make;
         opt.text = make;
         makeSelect.add(opt);
       });
-    }
+    });
 
-    async function populateModels() {
-      modelSelect.innerHTML = '<option>Select Model</option>';
-      const year = yearSelect.value;
+    makeSelect.addEventListener("change", async () => {
+      modelSelect.innerHTML = '<option>Loading models…</option>';
+
       const make = makeSelect.value;
+      const year = yearSelect.value;
+      const url = `https://vpic.nhtsa.dot.gov/api/vehicles/GetModelsForMakeYear/make/${make}/modelyear/${year}?format=json`;
+      const data = await fetchJson(url);
 
-      const res = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/GetModelsForMakeYear/make/${make}/modelyear/${year}?format=json`);
-      const data = await res.json();
-
+      modelSelect.innerHTML = '<option>Select Model</option>';
       data.Results.forEach(item => {
         if (item.Model_Name) {
           const opt = document.createElement("option");
@@ -83,7 +86,9 @@
           modelSelect.add(opt);
         }
       });
-    }
+    });
+
+    populateYears();
   </script>
 </body>
 </html>
