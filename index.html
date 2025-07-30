@@ -1,7 +1,8 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Vehicle Selector</title>
   <style>
     body {
@@ -29,8 +30,7 @@
 
   <script>
     async function fetchJson(url) {
-      const proxyUrl = "https://corsproxy.io/?";
-      const res = await fetch(proxyUrl + encodeURIComponent(url));
+      const res = await fetch("https://corsproxy.io/?" + encodeURIComponent(url));
       return res.json();
     }
 
@@ -53,15 +53,12 @@
       modelSelect.innerHTML = '<option>Select Model</option>';
 
       const year = yearSelect.value;
-      const url = `https://vpic.nhtsa.dot.gov/api/vehicles/GetMakesForVehicleModelYear/modelyear/${year}?format=json`;
+      const url = `https://vpic.nhtsa.dot.gov/api/vehicles/GetMakesForVehicleType/car?format=json`;
       const data = await fetchJson(url);
-      const uniqueMakes = new Set();
-      data.Results.forEach(item => {
-        if (item.MakeName) uniqueMakes.add(item.MakeName);
-      });
+      const makes = data.Results.map(r => r.MakeName).sort();
 
       makeSelect.innerHTML = '<option>Select Make</option>';
-      Array.from(uniqueMakes).sort().forEach(make => {
+      makes.forEach(make => {
         const opt = document.createElement("option");
         opt.value = make;
         opt.text = make;
@@ -76,15 +73,14 @@
       const year = yearSelect.value;
       const url = `https://vpic.nhtsa.dot.gov/api/vehicles/GetModelsForMakeYear/make/${make}/modelyear/${year}?format=json`;
       const data = await fetchJson(url);
+      const models = data.Results.map(r => r.Model_Name).sort();
 
       modelSelect.innerHTML = '<option>Select Model</option>';
-      data.Results.forEach(item => {
-        if (item.Model_Name) {
-          const opt = document.createElement("option");
-          opt.value = item.Model_Name;
-          opt.text = item.Model_Name;
-          modelSelect.add(opt);
-        }
+      models.forEach(model => {
+        const opt = document.createElement("option");
+        opt.value = model;
+        opt.text = model;
+        modelSelect.add(opt);
       });
     });
 
