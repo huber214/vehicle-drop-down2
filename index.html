@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Vehicle Selector</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    label, select {
+      display: block;
+      margin: 10px 0;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <label for="year">Year:</label>
+  <select id="year" onchange="populateMakes()">
+    <option>Select Year</option>
+  </select>
+
+  <label for="make">Make:</label>
+  <select id="make" onchange="populateModels()">
+    <option>Select Make</option>
+  </select>
+
+  <label for="model">Model:</label>
+  <select id="model">
+    <option>Select Model</option>
+  </select>
+
+  <script>
+    const yearSelect = document.getElementById("year");
+    const makeSelect = document.getElementById("make");
+    const modelSelect = document.getElementById("model");
+
+    // Populate year dropdown from 2025 to 1980
+    for (let y = 2025; y >= 1980; y--) {
+      let opt = document.createElement("option");
+      opt.value = y;
+      opt.text = y;
+      yearSelect.add(opt);
+    }
+
+    async function populateMakes() {
+      makeSelect.innerHTML = '<option>Select Make</option>';
+      modelSelect.innerHTML = '<option>Select Model</option>';
+      const year = yearSelect.value;
+
+      const res = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/GetMakesForVehicleModelYear/modelyear/${year}?format=json`);
+      const data = await res.json();
+
+      const uniqueMakes = new Set();
+      data.Results.forEach(item => {
+        if (item.MakeName) {
+          uniqueMakes.add(item.MakeName);
+        }
+      });
+
+      Array.from(uniqueMakes).sort().forEach(make => {
+        const opt = document.createElement("option");
+        opt.value = make;
+        opt.text = make;
+        makeSelect.add(opt);
+      });
+    }
+
+    async function populateModels() {
+      modelSelect.innerHTML = '<option>Select Model</option>';
+      const year = yearSelect.value;
+      const make = makeSelect.value;
+
+      const res = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/GetModelsForMakeYear/make/${make}/modelyear/${year}?format=json`);
+      const data = await res.json();
+
+      data.Results.forEach(item => {
+        if (item.Model_Name) {
+          const opt = document.createElement("option");
+          opt.value = item.Model_Name;
+          opt.text = item.Model_Name;
+          modelSelect.add(opt);
+        }
+      });
+    }
+  </script>
+</body>
+</html>
